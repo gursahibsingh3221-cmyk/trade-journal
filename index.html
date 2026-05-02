@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Trade Journal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #0f172a; color: white; }
+    input, button { padding: 10px; margin: 5px; }
+    .card { background: #1e293b; padding: 10px; margin: 10px 0; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>Trade Journal</h1>
+
+<input id="symbol" placeholder="Symbol">
+<input id="entry" placeholder="Entry">
+<input id="exit" placeholder="Exit">
+<input id="size" placeholder="Size">
+<button onclick="addTrade()">Add Trade</button>
+
+<h2 id="stats"></h2>
+
+<canvas id="chart"></canvas>
+
+<div id="trades"></div>
+
+<script>
+let trades = JSON.parse(localStorage.getItem("trades") || "[]");
+
+function save() {
+  localStorage.setItem("trades", JSON.stringify(trades));
+}
+
+function addTrade() {
+  let symbol = document.getElementById("symbol").value;
+  let entry = parseFloat(document.getElementById("entry").value);
+  let exit = parseFloat(document.getElementById("exit").value);
+  let size = parseFloat(document.getElementById("size").value);
+
+  let pnl = (exit - entry) * size;
+
+  trades.push({ symbol, entry, exit, size, pnl });
+  save();
+  render();
+}
+
+function render() {
+  let div = document.getElementById("trades");
+  div.innerHTML = "";
+
+  let total = 0;
+
+  trades.forEach(t => {
+    total += t.pnl;
+    div.innerHTML += `<div class="card">
+      <b>${t.symbol}</b><br>
+      Entry: ${t.entry} | Exit: ${t.exit}<br>
+      PnL: ${t.pnl.toFixed(2)}
+    </div>`;
+  });
+
+  document.getElementById("stats").innerText = "Total PnL: " + total.toFixed(2);
+
+  let data = trades.map((t,i)=> trades.slice(0,i+1).reduce((a,x)=>a+x.pnl,0));
+
+  new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels: data.map((_,i)=>i+1),
+      datasets: [{ data }]
+    }
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
